@@ -36,11 +36,21 @@ class NN:
 		return curr
 
 	# Backward propagation
-	def backward(self, X, curr_y, y):
+	def backward(self, X, y):
 		biases_err = [np.zeros(i, 1) for i in self.l_sizes[1:]]
 		weights_err = [np.zeros(j, i) for i, j in zip(self.l_sizes[:-1], self.l_sizes[1:])]
-		activation = [None] * self.n_layer
 
+		# forward propagation while saving a and z values
+		a = [X]
+		z = []
+		for i in range(len(self.backward)):
+			bias = self.biases[i]
+			weight = self.weights[i]
+			curr = a[-1]
+			mult = np.dot(weight , curr)
+			z.append(mult + bias)
+			curr = self.sigmoid(mult + bias)
+			a.append(curr)
 
 	def training(self, data):
 		for i in range(self.n_iterations):
