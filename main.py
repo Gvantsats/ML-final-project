@@ -6,19 +6,22 @@ class NN:
 	def __init__(self , n_inputs):
 		self.label_names = ['უ', 'ყ', 'მ', 'შ', 'ძ', 'წ', 'ს', 'ხ', 'ლ', 'ჩ']
 		# learning info
-		self.n_iterations = 1000
+		self.n_iterations = 1
 		# layer info
-		self.l_sizes = [n_inputs, 4, 4, 1]
+		self.l_sizes = [n_inputs, 15 , 10 , 10]
+		self.n_layer = len(self.l_sizes)
 		# generating biases and weights on every hidden layer
 		self.biases = [np.random.randn(i, 1) for i in self.l_sizes[1:]]
-		self.weights = [np.random.randn(i, j) for i, j in zip(self.l_sizes[:-1], self.l_sizes[1:])]
+		self.weights = [np.random.randn(j, i) for i, j in zip(self.l_sizes[:-1], self.l_sizes[1:])]
+		# learning rate
+		self.l_rate = 0.01
 
 	# Activation function
-	def sigmoid(s):
+	def sigmoid(self, s):
 		return 1.0 / (np.exp(-1 * s) + 1.0)
 
 	# Derivative of activation function
-	def sigmoid_der(s):
+	def sigmoid_der(self, s):
 		return sigmoid(s) * (1.0 - sigmoid(s))
 
 	# Forward propagation
@@ -34,12 +37,15 @@ class NN:
 
 	# Backward propagation
 	def backward(self, X, curr_y, y):
-		pass
+		biases_err = [np.zeros(i, 1) for i in self.l_sizes[1:]]
+		weights_err = [np.zeros(j, i) for i, j in zip(self.l_sizes[:-1], self.l_sizes[1:])]
+		activation = [None] * self.n_layer
 
-	def training(self):
+
+	def training(self, data):
 		for i in range(self.n_iterations):
-			curr_y = forward(X)
-			backward(X, curr_y, y)
+			
+				
 
 	def classify(self , data):
 		best = float("-inf")
@@ -53,3 +59,12 @@ class NN:
 		return best_char
 
 	
+if __name__ == "__main__":
+
+	xor_ex = [[[0, 0], 0], [[0, 1], 1], [[1, 0], 1], [[1, 1], 0]]
+
+	aq = NN(3)
+	d = np.array([2,3,1])
+	d = d.reshape((3 , 1))
+	print(d.shape)
+	print (aq.training(d , [1]))
