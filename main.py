@@ -18,11 +18,11 @@ class NN:
 
 	# Activation function
 	def sigmoid(self, s):
-		return 1.0 / (np.exp(-1 * s) + 1.0)
+		return 1.0 / (np.exp(-s) + 1.0)
 
 	# Derivative of activation function
 	def sigmoid_der(self, s):
-		return sigmoid(s) * (1.0 - sigmoid(s))
+		return self.sigmoid(s) * (1.0 - self.sigmoid(s))
 
 	# Forward propagation
 	def forward(self, data):
@@ -43,7 +43,7 @@ class NN:
 		# forward propagation while saving a and z values
 		a = [X]
 		z = []
-		for i in range(len(self.backward)):
+		for i in range(len(self.biases)):
 			bias = self.biases[i]
 			weight = self.weights[i]
 			curr = a[-1]
@@ -52,8 +52,26 @@ class NN:
 			curr = self.sigmoid(mult + bias)
 			a.append(curr)
 
+		# backpropagation
+		loss = (a[-1] - y) * self.sigmoid_der(z[-1])
+		biases_err = loss
+		weights_err = np.dot(loss, a[-2].transpose())
+
+		for i in range(1 , self.n_layer):
+         loss = np.dot(self.weights[-i + 1].transpose(), loss) * self.sigmoid_der(z[-i])
+         biases_err[-i] = loss
+         weights_err[-i] = np.dot(loss, a[-i - 1].transpose())
+
+		#update weights and biases
+		for i in range(self.biases):
+			self.weights[i] -= self.l_rate * weights_err[i]
+			self.biases[i] -= self.l_rate * biases_err[i]
+
 	def training(self, data):
 		for i in range(self.n_iterations):
+			X = data[0]
+			y = data[1]
+			self.backward(X , y)
 			
 				
 
