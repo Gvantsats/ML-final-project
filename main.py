@@ -8,7 +8,7 @@ class NN:
 		# learning info
 		self.n_iterations = 1
 		# layer info
-		self.l_sizes = [n_inputs, 15 , 10 , 10]
+		self.l_sizes = [n_inputs, 2, 1]
 		self.n_layer = len(self.l_sizes)
 		# generating biases and weights on every hidden layer
 		self.biases = [np.random.randn(i, 1) for i in self.l_sizes[1:]]
@@ -37,9 +37,10 @@ class NN:
 
 	# Backward propagation
 	def backward(self, X, y):
-		biases_err = [np.zeros(i, 1) for i in self.l_sizes[1:]]
-		weights_err = [np.zeros(j, i) for i, j in zip(self.l_sizes[:-1], self.l_sizes[1:])]
-
+		biases_err = [np.zeros((i, 1)) for i in self.l_sizes[1:]]
+		weights_err = [np.zeros((j, i)) for i, j in zip(self.l_sizes[:-1], self.l_sizes[1:])]
+		
+		
 		# forward propagation while saving a and z values
 		a = [X]
 		z = []
@@ -54,24 +55,27 @@ class NN:
 
 		# backpropagation
 		loss = (a[-1] - y) * self.sigmoid_der(z[-1])
-		biases_err = loss
-		weights_err = np.dot(loss, a[-2].transpose())
+		weights_err[-1] = np.dot(loss, a[-2].transpose())
+		biases_err[-1] = loss
+		
+		for i in range(2 , self.n_layer):
+			loss = np.dot(self.weights[-i + 1].transpose(), loss) * self.sigmoid_der(z[-i])
+			weights_err[-i] = np.dot(loss, a[-i - 1].transpose())
+			biases_err[-i] = loss
 
-		for i in range(1 , self.n_layer):
-         loss = np.dot(self.weights[-i + 1].transpose(), loss) * self.sigmoid_der(z[-i])
-         biases_err[-i] = loss
-         weights_err[-i] = np.dot(loss, a[-i - 1].transpose())
-
+		print (self.weights)
+		print(weights_err)
 		#update weights and biases
-		for i in range(self.biases):
+		for i in range(len(self.biases)):
 			self.weights[i] -= self.l_rate * weights_err[i]
 			self.biases[i] -= self.l_rate * biases_err[i]
 
 	def training(self, data):
 		for i in range(self.n_iterations):
-			X = data[0]
-			y = data[1]
-			self.backward(X , y)
+			for j in range(len(data)):
+				X = data[j][0]
+				y = data[j][1]
+				self.backward(X , y)
 			
 				
 
@@ -89,10 +93,8 @@ class NN:
 	
 if __name__ == "__main__":
 
-	xor_ex = [[[0, 0], 0], [[0, 1], 1], [[1, 0], 1], [[1, 1], 0]]
+	xor_ex = [(np.array([0, 0]), np.array([0])), (np.array([0, 1]), np.array([1])), (np.array([1, 0]), np.array([1])), (np.array([1, 1]), ([0]))]
 
-	aq = NN(3)
-	d = np.array([2,3,1])
-	d = d.reshape((3 , 1))
-	print(d.shape)
-	print (aq.training(d , [1]))
+	aq = NN(2)
+	aq.training(xor_ex)
+	print(d.forward([0 , 0]))
