@@ -18,7 +18,7 @@ class DataObject:
     def __init__(self, image):
         self.image_arr = image
 
-    def get_array(self):
+    def get_array(self, shape=(6,)):
         return self.image_arr.flatten()
 
     def set_parent_features(self, parent_obj):
