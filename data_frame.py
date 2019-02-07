@@ -19,7 +19,7 @@ class DataObject:
         self.image_arr = image
 
     def get_array(self):
-        return self.image_arr
+        return self.image_arr.flatten()
 
     def set_parent_features(self, parent_obj):
         self.ROTATE = parent_obj.ROTATE
