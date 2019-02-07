@@ -17,8 +17,10 @@ class DataObject:
 
     def __init__(self, image):
         self.image_arr = image
+        self.flat_arr_len = image.shape[0] * image.shape[1]
 
-    def get_array(self, shape=(6,)):
+    def get_array(self, shape=None):
+        shape = (self.flat_arr_len,) if shape is None else shape
         return self.image_arr.flatten().reshape(shape)
 
     def set_parent_features(self, parent_obj):
@@ -176,4 +178,3 @@ class TrainingDataFrame:
             total += amount
             print(str(amount) + " - " + letter + "'s.")
         print("\nTOTAL: " + str(total) + " letters.")
-
