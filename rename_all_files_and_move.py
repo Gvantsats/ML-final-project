@@ -1,9 +1,8 @@
-from os import listdir
-from shutil import move
+from os import listdir, rename
 import numpy as np
 from PIL import Image
 
-ROOT_DIR = "./data/flipped/"
+ROOT_DIR = "./data/ასოები/"
 
 for letter in listdir(ROOT_DIR):
     if len(letter) > 1:
@@ -11,5 +10,5 @@ for letter in listdir(ROOT_DIR):
     for image_name in listdir(ROOT_DIR+letter):
         print(ROOT_DIR + letter + "/" + image_name)
         print("./data/ასოები/" + letter + "/" + image_name.strip(".jpg") + "_flipped.jpg")
-        move(ROOT_DIR + letter + "/" + image_name,
-             "./data/ასოები/" + letter + "/" + image_name.strip(".jpg") + "_flipped.jpg")
+        rename(ROOT_DIR + letter + "/" + image_name,
+             ROOT_DIR + letter + "/" + letter + "_" + image_name)
