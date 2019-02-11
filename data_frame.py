@@ -19,9 +19,12 @@ class DataObject:
         self.image_arr = image
         self.flat_arr_len = image.shape[0] * image.shape[1]
 
+    def get_matrix(self):
+        return self.image_arr
+
     def get_array(self, shape=None):
-        shape = (self.flat_arr_len,) if shape is None else shape
-        return self.image_arr.flatten().reshape(shape)
+        shape = (self.flat_arr_len, 1) if shape is None else shape
+        return self.image_arr.reshape(shape)
 
     def set_parent_features(self, parent_obj):
         self.ROTATE = parent_obj.ROTATE
@@ -58,13 +61,14 @@ class TrainingDataFrame:
                         img = 255 - img
                         self.DEFAULT_COLOR = 0.0
                     resized_img = cv2.resize(img, dsize=(self.WIDTH, self.HEIGHT), interpolation=cv2.INTER_CUBIC)
+                    (thresh, im_bw) = cv2.threshold(resized_img, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
                     if letter not in self.data:
                         self.data[letter] = []
                         self.letters.append(letter)
-                    self.data[letter].append(DataObject(resized_img))
+                    self.data[letter].append(DataObject(im_bw))
 
     # Rotate alphas are angles.
-    def add_rotate_f(self, rotate_alphas=(-20, -10, -5, 5, 10, 20)):
+    def add_rotate_f(self, rotate_alphas=(-15, -5, 5, 15)):
         rotate_alphas = list(set(rotate_alphas))
         rotate_alphas = [i for i in rotate_alphas if i % 360 != 0]  # removes angles which are useless
         if len(rotate_alphas) == 0:
@@ -75,7 +79,7 @@ class TrainingDataFrame:
                 if not sample.ROTATE:
                     sample.ROTATE = True
                     for angle in rotate_alphas:
-                        new_sample = scipy.ndimage.interpolation.rotate(sample.get_array(), angle,
+                        new_sample = scipy.ndimage.interpolation.rotate(sample.get_matrix(), angle,
                                                                         mode='constant',
                                                                         cval=self.DEFAULT_COLOR,
                                                                         reshape=False)
@@ -86,7 +90,7 @@ class TrainingDataFrame:
 
     # Scale alphas are pixels to add edges (then resize to original size).
     # Warning: alphas that are bigger than 3 or smaller than -3 . passing them would cause an error.
-    def add_scale_f(self, scale_alphas=(3, 2, 1, -1, -2, -3)):
+    def add_scale_f(self, scale_alphas=(2, 0)):
         scale_alphas = list(set([int(i) for i in scale_alphas]))
         if 0 in scale_alphas:
             scale_alphas.remove(0)
@@ -106,12 +110,12 @@ class TrainingDataFrame:
                         if pixels > 0:
                             new_sample = np.c_[np.full((self.HEIGHT + 2 * pixels, pixels), self.DEFAULT_COLOR),
                                                np.r_[np.full((pixels, self.WIDTH), self.DEFAULT_COLOR),
-                                                     sample.get_array(),
+                                                     sample.get_matrix(),
                                                      np.full((pixels, self.WIDTH), self.DEFAULT_COLOR)],
                                                np.full((self.HEIGHT + 2 * pixels, pixels), self.DEFAULT_COLOR)]
                         else:
                             pixels *= -1
-                            new_sample = sample.get_array()[pixels:-pixels, pixels:-pixels]
+                            new_sample = sample.get_matrix()[pixels:-pixels, pixels:-pixels]
                         new_sample = cv2.resize(new_sample, dsize=(self.WIDTH, self.HEIGHT),
                                                 interpolation=cv2.INTER_CUBIC)
                         new_dataobject = DataObject(new_sample)
@@ -121,7 +125,7 @@ class TrainingDataFrame:
 
     # Sigmas are values for blur coefficient. How much pixels should be interpolated to neighbour pixels.
     # Please keep values between 0 < sigma < 1.
-    def add_blur_f(self, sigmas=(.1, .5)):
+    def add_blur_f(self, sigmas=(.3, 0)):
         sigmas = list(set(sigmas))
         sigmas = [i for i in sigmas if 0 < i < 1]  # removes values which are forbidden
         if len(sigmas) == 0:
@@ -132,7 +136,7 @@ class TrainingDataFrame:
                 if not sample.BLUR:
                     sample.BLUR = True
                     for sigma in sigmas:
-                        new_sample = scipy.ndimage.gaussian_filter(sample.get_array(), sigma=sigma)
+                        new_sample = scipy.ndimage.gaussian_filter(sample.get_matrix(), sigma=sigma)
                         new_dataobject = DataObject(new_sample)
                         new_dataobject.set_parent_features(sample)  # To prevent accidently using same feature twice.
                         appendix.append(new_dataobject)
@@ -147,7 +151,7 @@ class TrainingDataFrame:
             for sample in self.data[letter]:
                 if not sample.NOISE:
                     sample.NOISE = True
-                    new_sample = np.copy(sample.get_array())
+                    new_sample = np.copy(sample.get_matrix())
                     for _ in range(dots):
                         x = random.randint(0, self.WIDTH - 1)
                         y = random.randint(0, self.HEIGHT - 1)
@@ -171,10 +175,25 @@ class TrainingDataFrame:
         return self.letters
 
     def describe(self):
-        print("data contains " + str(len(self.letters)) + "letters, ")
+        print("data contains " + str(len(self.letters)) + " letters, ")
         total = 0
         for letter in self.letters:
             amount = len(self.data[letter])
             total += amount
             print(str(amount) + " - " + letter + "'s.")
         print("\nTOTAL: " + str(total) + " letters.")
+
+
+data = TrainingDataFrame(root_dir="./data/flipped/")
+data.describe()
+data.add_rotate_f()
+data.describe()
+data.add_blur_f()
+data.describe()
+data.add_scale_f()
+data.describe()
+counter = 0
+for elem in data.get_letter_list('ძ'):
+    print(elem.get_matrix().shape, ".data/flipped/" + str(counter) + ".jpg")
+    cv2.imwrite("./data/flipped/" + str(counter) + ".jpg", elem.get_matrix())
+    counter += 1
