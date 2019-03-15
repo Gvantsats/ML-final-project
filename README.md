@@ -1,2 +1,2 @@
 # ML-final-project
-Georgian letter recognition with neural nework
+Georgian letter recognition with neural network
